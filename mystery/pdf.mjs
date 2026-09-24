@@ -10,6 +10,11 @@ for (const f of readdirSync(src).filter((f) => f.endsWith('.html'))) {
   const page = await browser.newPage();
   await page.goto('file://' + join(src, f), { waitUntil: 'networkidle' });
   await page.evaluate(() => document.fonts.ready);
+  // 페이지·카드 밖으로 넘친 내용이 있으면 빌드 실패
+  const over = await page.evaluate(() => [...document.querySelectorAll('.page, .card')]
+    .map((el, i) => ({ i, cls: el.className, over: el.scrollHeight - el.clientHeight }))
+    .filter((x) => x.over > 1));
+  if (over.length) { console.error('✘ overflow in ' + f, over); process.exitCode = 1; }
   await page.pdf({ path: join(dst, f.replace(/\.html$/, '.pdf')), format: 'A4', printBackground: true, preferCSSPageSize: true });
   console.log('✔ pdf/' + f.replace(/\.html$/, '.pdf'));
   await page.close();

@@ -6,12 +6,12 @@
 ## 파일
 | 파일 | 용도 |
 |---|---|
-| `pdf/01_진행자가이드.pdf` ~ `05_초대장.pdf` | **판매할 상품.** 5개를 zip 하나로 묶어서 올리세요 |
-| `pdf/00_무료체험판.pdf` | 무료 배포용 맛보기(프롤로그와 캐릭터 1명: 서하진) |
+| `pdf/ko/01_진행자가이드.pdf` ~ `05_초대장.pdf` | **판매할 상품.** 5개를 zip 하나로 묶어서 올리세요 |
+| `pdf/ko/00_무료체험판.pdf` | 무료 배포용 맛보기(프롤로그와 캐릭터 1명: 서하진) |
 | `../docs/mystery/index.html` | 판매 랜딩 페이지 (`BUY_URL`을 결제 링크로 바꾸기) |
 | `../docs/mystery/thumb.png` | 상품 썸네일 (1000×1000) |
 
-zip으로 묶는 명령: `cd mystery/pdf && zip ../백설장살인사건_정식판.zip 0[1-5]_*.pdf`
+zip으로 묶는 명령: `cd mystery/pdf/ko && zip ../../백설장살인사건_정식판.zip 0[1-5]_*.pdf`
 
 ## 사용자님이 할 일 (처음 한 번, 30분 정도)
 1. **판매처 등록.** 검색으로 손님이 알아서 들어오는 곳부터 올리세요. 개인도 판매할 수 있습니다.
@@ -72,4 +72,9 @@ zip으로 묶는 명령: `cd mystery/pdf && zip ../백설장살인사건_정식�
 ## ⚠️ 상품 원본은 저장소에 없습니다
 이 저장소는 **공개**입니다. 누구나 공짜로 가져가지 못하도록 `content.py`(시나리오·해답 전체), `pdf/`, zip은 커밋하지 않습니다.
 원본은 사용자님께 파일로 직접 전달했습니다. 안전한 곳(개인 드라이브 등)에 꼭 보관하세요.
-다시 빌드하려면 `content.py`를 이 폴더에 넣고 `npm install && npm run build`를 실행하면 됩니다.
+다시 빌드하려면 `content.py`(영어판은 `content_en.py`)를 이 폴더에 넣고 `npm install` 후 `python3 build.py`(영어판: `python3 build.py en`)를 실행하면 됩니다. 글꼴은 처음 빌드할 때 자동으로 내려받습니다.
+
+## 영어판 (해외 판매)
+- `python3 build.py en` → `pdf/en/` (US Letter)
+- 판매 이미지: `node listing.mjs listing_en`
+- Etsy·Gumroad 등록 자료: [LISTING_EN.md](LISTING_EN.md)
