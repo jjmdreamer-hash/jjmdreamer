@@ -17,6 +17,10 @@ sys.path.insert(0, str(ROOT))
 
 LANG = sys.argv[1] if len(sys.argv) > 1 else "ko"
 C = importlib.import_module("content" if LANG == "ko" else f"content_{LANG}")
+try:  # 확장팩(content*_exp.py)이 있으면 함께 빌드한다. 불러오면 C.UI에 문구가 추가된다.
+    XC = importlib.import_module(C.__name__ + "_exp")
+except ModuleNotFoundError:
+    XC = None
 U = C.UI
 OUT = ROOT / "out" / LANG
 PDF = ROOT / "pdf" / LANG
@@ -232,7 +236,8 @@ def solution():
 
 
 # ---------- 5. 초대장 ----------
-def invitations():
+def invitations(chars=None):
+    chars = chars or C.CHARACTERS
     cards = [f"""<div class="inv"><div class="snow"></div><div style="position:relative">
 <div class="kicker" style="color:#f3c9c9">INVITATION</div><h2>{e(C.TITLE)}</h2>
 <p style="color:#c9d2ea">{e(U['inv_line'])}</p>
@@ -240,9 +245,10 @@ def invitations():
 <p style="margin-top:3mm;color:#c9d2ea">{e(U['inv_costume'])}{e(ch['costume'])}</p>
 <p style="margin-top:8mm">{e(U['inv_date'])} <span class="blank"></span>　{e(U['inv_place'])} <span class="blank"></span></p>
 <p style="margin-top:3mm;font-size:9pt;color:#aeb8d4">{e(U['inv_tag'])}</p>
-</div></div>""" for ch in C.CHARACTERS]
-    return doc(U["inv_title"], [f'<section class="page" style="padding:0">{"".join(cards[i:i + 2])}</section>'
-                                for i in range(0, len(cards), 2)])
+</div></div>""" for ch in chars]
+    pages = [f'<section class="page" style="padding:0">{"".join(cards[i:i + 2])}</section>'
+             for i in range(0, len(cards), 2)]
+    return pages if chars is not C.CHARACTERS else doc(U["inv_title"], pages)
 
 
 # ---------- 무료 체험판 ----------
@@ -257,8 +263,38 @@ def sample():
         character_book(ch)])
 
 
+# ---------- 8인 확장팩 ----------
+def expansion():
+    X = XC.EXPANSION
+    t = U["exp_title"]
+    places = "".join(f"<tr><td>{e(c['place'])}</td><td>{c['id']}</td></tr>" for c in X["clues"])
+    slips = "".join(
+        f'<div class="box" style="border-style:dashed;margin:0 0 6mm"><div class="kicker">{e(U["exp_slip_label"])}{e(n)}</div>'
+        f'<p style="margin-top:2mm">{e(txt)}</p></div>' for n, txt in X["slips"])
+    sol = "".join(f'<div class="box"><b>{e(a)}</b><p class="muted" style="margin-top:1.5mm">{e(b)}</p></div>'
+                  for a, b in X["solution"])
+    return doc(t, [
+        cover(t, U["exp_cover_note"]),
+        f"""<section class="page"><div class="kicker">EXPANSION</div><h2>{e(U['exp_setup_h'])}</h2>
+<div class="box"><ol>{''.join(f"<li>{i}</li>" for i in U['exp_setup_items'])}</ol></div>
+<h3>{e(U['exp_places_h'])}</h3>
+<table><tr><th>{e(U['place_head'][0])}</th><th>{e(U['place_head'][1])}</th></tr>{places}</table>
+{foot(t + " · 1")}</section>""",
+        *[character_book(ch) for ch in X["characters"]],
+        f"""<section class="page"><div class="kicker">SLIPS</div><h2>{e(U['exp_slips_h'])}</h2>
+<p class="muted">{e(U['exp_slips_note'])}</p>{slips}
+{foot(t + " · 2")}</section>""",
+        f'<section class="page cards">{"".join(card(c) for c in X["clues"])}</section>',
+        *invitations(X["characters"]),
+        cover(U["exp_sol_cover"], U["sol_cover_note"]),
+        f"""<section class="page"><div class="kicker">SOLUTION</div><h2>{e(U['exp_sol_title'])}</h2>{sol}
+{foot(t + " · 3")}</section>"""])
+
+
 BUILDERS = {"host": host_guide, "chars": characters, "cards": clue_cards,
             "solution": solution, "invites": invitations, "sample": sample}
+if XC:
+    BUILDERS["exp"] = expansion
 
 
 def main():

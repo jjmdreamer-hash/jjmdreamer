@@ -21,17 +21,17 @@ const slides = {
 <div class="k">PRINTABLE MURDER MYSTERY GAME</div>
 <div class="pf" style="font-weight:900;font-size:110px;line-height:1.02;margin-top:20px">Murder at<br>White Snow<br>Lodge</div>
 <div class="pf" style="font-size:36px;color:#c9d2ea;margin-top:24px">A K-Drama murder mystery party</div>
-<div style="display:flex;gap:12px;margin-top:36px">${['6 players','~2 hours','Instant download'].map(t=>`<span class="pill">${t}</span>`).join('')}</div></div></div>`,
+<div style="display:flex;gap:12px;margin-top:36px">${['6–8 players','~2 hours','Instant download'].map(t=>`<span class="pill">${t}</span>`).join('')}</div></div></div>`,
   '2_inside': `<div class="s"><div class="snow"></div><div style="position:absolute;inset:70px">
-<div class="k">WHAT'S INSIDE</div><div class="pf" style="font-weight:900;font-size:64px;margin:14px 0 34px">Everything you need</div>
+<div class="k">WHAT'S INSIDE</div><div class="pf" style="font-weight:900;font-size:64px;margin:14px 0 10px">Everything you need</div><div style="font-size:24px;color:#c9d2ea;margin-bottom:30px">US Letter PDF · print at home, cut, play tonight</div>
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:22px">
 ${[['Host Guide','Setup, rules, round-by-round script, ballots & score sheet'],['6 Character Booklets','Secrets, true timelines, personal goals'],
 ['20 Clue Cards','3 rounds: crime scene → search → second look'],['6 Invitations','Send before the party to assign roles'],
-['Sealed Solution','Full deduction chain + epilogue'],['US Letter','Print at home, cut, play tonight']].map(([a,b])=>
+['Sealed Solution','Full deduction chain + epilogue'],['8-Player Expansion','2 extra suspects, 3 clues, invitations']].map(([a,b])=>
 `<div class="card"><div class="pf" style="font-weight:900;font-size:30px">${a}</div><div style="font-size:21px;color:#5b6275;margin-top:8px;line-height:1.45">${b}</div></div>`).join('')}
 </div></div></div>`,
   '3_suspects': `<div class="s"><div class="snow"></div><div style="position:absolute;inset:70px">
-<div class="k">SIX SUSPECTS · ONE LIAR</div><div class="pf" style="font-weight:900;font-size:60px;margin:14px 0 30px">Who killed the novelist?</div>
+<div class="k">SIX TO EIGHT SUSPECTS · ONE LIAR</div><div class="pf" style="font-weight:900;font-size:60px;margin:14px 0 30px">Who killed the novelist?</div>
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px">
 ${[['Seo Ha-jin','The editor who knows too much'],['Kang Min-jae','The lawyer with missing money'],['Yoon Se-ah','The niece about to be disinherited'],
 ['Baek Do-hyun','The caretaker with a new name'],['Oh Ji-yu','The protégée with a teal pen'],['Han Gyeol','The journalist with a camera']].map(([a,b])=>
