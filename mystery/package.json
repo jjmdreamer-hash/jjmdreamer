@@ -1,0 +1,7 @@
+{
+  "name": "baekseoljang-mystery",
+  "private": true,
+  "type": "module",
+  "scripts": { "build": "python3 build.py" },
+  "devDependencies": { "playwright": "^1.55.0" }
+}

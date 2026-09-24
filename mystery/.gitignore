@@ -1,0 +1,7 @@
+node_modules/
+out/
+__pycache__/
+# 공개 저장소라 유료 상품 원본은 커밋하지 않는다
+content.py
+pdf/
+*.zip
