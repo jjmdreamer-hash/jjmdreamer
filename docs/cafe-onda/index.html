@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>카페 온다 | 스페셜티 커피 · 디저트</title>
+<meta name="description" content="매일 아침 직접 로스팅한 원두로, 동네에서 가장 느린 커피를 내립니다.">
+<meta property="og:title" content="카페 온다">
+<meta property="og:description" content="매일 아침 직접 로스팅한 원두로, 동네에서 가장 느린 커피를 내립니다.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+:root{--c:#8a5a3c;--ink:#1b1b1f;--sub:#5d5d66;--bg:#ffffff;--soft:#f6f5f2;--line:#e7e5e0}
+@media (prefers-color-scheme: dark){:root{--ink:#f2f2f4;--sub:#a9a9b3;--bg:#141416;--soft:#1d1d21;--line:#2c2c31}}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Noto Sans KR',system-ui,sans-serif;color:var(--ink);background:var(--bg);line-height:1.65;word-break:keep-all}
+a{color:inherit;text-decoration:none}
+.wrap{max-width:960px;margin:0 auto;padding:0 20px}
+header.hero{min-height:88vh;display:flex;align-items:flex-end;padding:0 0 56px;color:#fff;
+  background:linear-gradient(180deg,rgba(0,0,0,.05) 0%,rgba(0,0,0,.65) 100%),linear-gradient(135deg,#c89b73,#3b2a20);background-size:cover;background-position:center}
+.badge{display:inline-block;font-size:13px;font-weight:700;letter-spacing:.08em;padding:6px 12px;border:1px solid rgba(255,255,255,.6);border-radius:99px;margin-bottom:18px}
+h1{font-size:clamp(38px,8vw,72px);font-weight:900;line-height:1.1;letter-spacing:-.02em}
+.tagline{font-size:clamp(17px,2.6vw,22px);margin-top:14px;opacity:.95;max-width:560px}
+.cta{display:flex;gap:10px;flex-wrap:wrap;margin-top:28px}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:14px 22px;border-radius:12px;font-weight:700;font-size:16px}
+.btn.main{background:var(--c);color:#fff}
+.btn.ghost{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.5);color:#fff;backdrop-filter:blur(6px)}
+section{padding:80px 0}
+section.alt{background:var(--soft)}
+.eyebrow{color:var(--c);font-weight:700;font-size:14px;letter-spacing:.12em;text-transform:uppercase}
+h2{font-size:clamp(26px,4.5vw,36px);font-weight:900;margin:8px 0 18px;letter-spacing:-.01em}
+.lead{font-size:18px;color:var(--sub);max-width:640px;white-space:pre-line}
+.grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin-top:34px}
+.card{background:var(--bg);border:1px solid var(--line);border-radius:18px;padding:24px}
+.card .num{font-size:30px;font-weight:900;color:var(--c)}
+.card h3{font-size:18px;margin:6px 0}
+.card p{color:var(--sub);font-size:15px}
+.menu{margin-top:30px;border-top:2px solid var(--ink)}
+.item{display:flex;justify-content:space-between;gap:16px;padding:18px 0;border-bottom:1px solid var(--line)}
+.item b{font-size:17px}
+.item small{display:block;color:var(--sub);font-size:14px;margin-top:2px}
+.item .price{font-weight:700;white-space:nowrap;color:var(--c)}
+.review{font-size:16px}
+.review .who{margin-top:12px;color:var(--sub);font-size:14px}
+.stars{color:#f5b301;letter-spacing:2px}
+.info{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:30px;margin-top:30px}
+.info dt{font-weight:700;margin-bottom:6px;color:var(--c)}
+.info dd{color:var(--sub);white-space:pre-line}
+footer{padding:40px 0 110px;color:var(--sub);font-size:13px;text-align:center}
+.bar{position:fixed;left:0;right:0;bottom:0;display:flex;gap:8px;padding:10px 12px calc(10px + env(safe-area-inset-bottom));background:var(--bg);border-top:1px solid var(--line);z-index:10}
+.bar a{flex:1;text-align:center;padding:13px 0;border-radius:10px;font-weight:700;font-size:15px;background:var(--soft)}
+.bar a.main{background:var(--c);color:#fff}
+@media (min-width:900px){.bar{display:none}footer{padding-bottom:40px}}
+</style>
+</head>
+<body>
+<header class="hero">
+  <div class="wrap">
+    <span class="badge">스페셜티 커피 · 디저트</span>
+    <h1>카페 온다</h1>
+    <p class="tagline">매일 아침 직접 로스팅한 원두로, 동네에서 가장 느린 커피를 내립니다.</p>
+    <div class="cta">
+      <a class="btn main" href="tel:01000000001">메뉴 문의</a>
+      <a class="btn ghost" href="tel:01000000001">전화 010-0000-0001</a>
+    </div>
+  </div>
+</header>
+
+<section>
+  <div class="wrap">
+    <div class="eyebrow">About</div>
+    <h2>하루 40잔만, 정성껏</h2>
+    <p class="lead">온다는 &#x27;오다&#x27;와 &#x27;온기&#x27;에서 따온 이름입니다.
+작은 로스터리에서 매주 두 번 원두를 볶고, 디저트는 매일 아침 매장에서 굽습니다.</p>
+    <div class="grid3"><div class="card"><div class="num">주 2회</div><h3>직접 로스팅</h3><p>볶은 지 7일 이내 원두만 사용합니다.</p></div><div class="card"><div class="num">매일</div><h3>당일 베이킹</h3><p>휘낭시에·스콘은 아침에 구워 그날 소진합니다.</p></div><div class="card"><div class="num">12석</div><h3>조용한 공간</h3><p>노트북·독서하기 좋은 창가 좌석.</p></div></div>
+  </div>
+</section>
+
+<section class="alt">
+  <div class="wrap">
+    <div class="eyebrow">Menu</div>
+    <h2>메뉴 &amp; 가격</h2>
+    <div class="menu"><div class="item"><div><b>오늘의 핸드드립</b><small>싱글오리진 2종 중 선택</small></div><div class="price">6,500원</div></div><div class="item"><div><b>온다 라떼</b><small>흑당 크림을 올린 시그니처</small></div><div class="price">6,000원</div></div><div class="item"><div><b>아메리카노</b></div><div class="price">4,500원</div></div><div class="item"><div><b>소금 휘낭시에</b></div><div class="price">3,500원</div></div><div class="item"><div><b>원두 200g</b><small>매장 로스팅 원두 포장 판매</small></div><div class="price">16,000원</div></div></div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="eyebrow">Reviews</div>
+    <h2>다녀가신 분들의 이야기</h2>
+    <div class="grid3"><div class="card review"><div class="stars">★★★★★</div><p>산미 있는 커피 좋아하면 무조건. 핸드드립 설명을 친절하게 해주세요.</p><div class="who">— 예시 후기</div></div><div class="card review"><div class="stars">★★★★★</div><p>휘낭시에가 겉바속촉. 주말엔 오후에 품절돼요.</p><div class="who">— 예시 후기</div></div><div class="card review"><div class="stars">★★★★★</div><p>조용해서 작업하러 자주 옵니다.</p><div class="who">— 예시 후기</div></div></div>
+  </div>
+</section>
+
+<section class="alt">
+  <div class="wrap">
+    <div class="eyebrow">Visit</div>
+    <h2>오시는 길</h2>
+    <dl class="info">
+      <div><dt>주소</dt><dd>서울시 ○○구 ○○로 12, 1층</dd></div>
+      <div><dt>영업시간</dt><dd>평일 09:00 – 21:00
+주말 10:00 – 22:00
+매주 월요일 휴무</dd></div>
+      <div><dt>문의</dt><dd>010-0000-0001
+<a href="https://instagram.com/cafe_onda_sample">인스타그램 @cafe_onda_sample</a></dd></div>
+    </dl>
+    <div class="cta"><a class="btn main" href="https://map.naver.com/p/search/%EC%B9%B4%ED%8E%98%20%EC%98%A8%EB%8B%A4%20%EC%84%9C%EC%9A%B8%EC%8B%9C%20%E2%97%8B%E2%97%8B%EA%B5%AC%20%E2%97%8B%E2%97%8B%EB%A1%9C%2012%2C%201%EC%B8%B5" target="_blank" rel="noopener">네이버 지도에서 보기</a></div>
+  </div>
+</section>
+
+<footer><div class="wrap">샘플 페이지입니다. 가상의 가게이며 후기와 연락처는 예시입니다.<br>© 2026 카페 온다. All rights reserved.</div></footer>
+
+<nav class="bar">
+  <a href="tel:01000000001">전화</a>
+  <a href="https://map.naver.com/p/search/%EC%B9%B4%ED%8E%98%20%EC%98%A8%EB%8B%A4%20%EC%84%9C%EC%9A%B8%EC%8B%9C%20%E2%97%8B%E2%97%8B%EA%B5%AC%20%E2%97%8B%E2%97%8B%EB%A1%9C%2012%2C%201%EC%B8%B5" target="_blank" rel="noopener">길찾기</a>
+  <a class="main" href="tel:01000000001">메뉴 문의</a>
+</nav>
+</body>
+</html>
