@@ -1,0 +1,1 @@
+google.com, pub-{{게시자ID 16자리}}, DIRECT, f08c47fec0942fa0
