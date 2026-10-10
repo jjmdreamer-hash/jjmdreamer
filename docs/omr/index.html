@@ -10,15 +10,17 @@
   --accent:#2f5bea; --accent-ink:#fff; --ok:#15803d; --bad:#dc2626; --warn:#d97706; --chip:#eef1f6;
 }
 @media (prefers-color-scheme:dark){
-  :root{--bg:#111316; --card:#1b1e23; --text:#eceef2; --muted:#9aa1ad; --line:#2c3038;
-    --accent:#6c8cff; --accent-ink:#0b0d12; --ok:#4ade80; --bad:#f87171; --warn:#fbbf24; --chip:#262a31;}
+  :root:not([data-theme="light"]){--bg:#111316; --card:#1b1e23; --text:#eceef2; --muted:#9aa1ad; --line:#2c3038;
+    --accent:#6c8cff; --accent-ink:#0b0d12; --ok:#4ade80; --bad:#f87171; --warn:#fbbf24; --chip:#262a31; color-scheme:dark}
 }
+:root[data-theme="dark"]{--bg:#111316; --card:#1b1e23; --text:#eceef2; --muted:#9aa1ad; --line:#2c3038;
+  --accent:#6c8cff; --accent-ink:#0b0d12; --ok:#4ade80; --bad:#f87171; --warn:#fbbf24; --chip:#262a31; color-scheme:dark}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;font-size:16px;line-height:1.5}
 .app{max-width:760px;margin:0 auto;padding:16px 16px 80px}
 h1{font-size:22px;margin:4px 0 2px}
 .sub{color:var(--muted);font-size:14px;margin:0 0 14px}
-.tabs{display:flex;gap:6px;position:sticky;top:0;background:var(--bg);padding:8px 0;z-index:5}
+.tabs{display:flex;gap:6px;position:sticky;top:env(safe-area-inset-top,0px);background:var(--bg);padding:8px 0;z-index:5}
 .tabs button{flex:1;padding:10px 4px;border:1px solid var(--line);background:var(--card);color:var(--text);border-radius:10px;font-size:15px;font-weight:600}
 .tabs button.on{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
 .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin:12px 0}
@@ -77,6 +79,11 @@ td.r,th.r{text-align:right}
 #busy{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;color:#fff;font-size:18px;z-index:50}
 .scroll{overflow-x:auto}
 #print-area{display:none}
+#dlg{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;padding:16px;z-index:60}
+#dlg .box{background:var(--card);color:var(--text);border-radius:14px;padding:18px;max-width:420px;width:100%}
+#dlg p{margin:0 0 14px;white-space:pre-line}
+.sheetimg{width:100%;border:1px solid var(--line);border-radius:8px;margin-top:10px;background:#fff}
+#copyArea{width:100%;height:120px;margin-top:8px;font-size:12px;color:var(--text);background:var(--bg);border:1px solid var(--line);border-radius:8px}
 @media print{
   @page{size:A4;margin:0}
   body{background:#fff}
@@ -119,6 +126,8 @@ td.r,th.r{text-align:right}
       <h2>답안지 출력</h2>
       <p class="muted">A4로 출력하세요. 인쇄 설정에서 <b>여백 없음</b> 또는 <b>실제 크기</b>를 고르면 가장 좋습니다. 매수는 인쇄 창에서 정하면 됩니다.</p>
       <button class="btn primary big" id="printBtn">🖨 답안지 출력하기</button>
+      <button class="btn big" id="imgBtn">🖼 답안지 이미지 만들기</button>
+      <div id="sheetImgWrap"></div>
     </div>
 
     <div class="card">
@@ -159,7 +168,8 @@ td.r,th.r{text-align:right}
     <div class="card">
       <h2 id="resTitle">결과</h2>
       <div class="stats" id="stats"></div>
-      <div class="btns"><button class="btn" id="csvBtn">⬇ 엑셀(CSV)로 받기</button></div>
+      <div class="btns"><button class="btn" id="csvBtn">⬇ 엑셀(CSV)로 받기</button><button class="btn" id="copyBtn">📋 엑셀에 붙여넣기용 복사</button></div>
+      <div id="copyMsg"></div>
     </div>
     <div class="card">
       <h2>학생별 점수</h2>
@@ -174,6 +184,7 @@ td.r,th.r{text-align:right}
 
 <div id="print-area"></div>
 <div id="busy" class="hidden">채점 중…</div>
+<div id="dlg" class="hidden"><div class="box"><p id="dlgMsg"></p><div class="btns"><button class="btn" id="dlgNo">취소</button><button class="btn primary" id="dlgOk">확인</button></div></div></div>
 
 <script>
 'use strict';
@@ -484,6 +495,15 @@ function grade(res, e){
    화면
    ========================================================= */
 const $ = s => document.querySelector(s);
+function dialog(msg, cancel){
+  return new Promise(res => {
+    $('#dlgMsg').textContent = msg; $('#dlgNo').classList.toggle('hidden', !cancel);
+    $('#dlg').classList.remove('hidden');
+    const done = v => { $('#dlg').classList.add('hidden'); res(v); };
+    $('#dlgOk').onclick = () => done(true); $('#dlgNo').onclick = () => done(false);
+  });
+}
+const ask = m => dialog(m, true), notice = m => dialog(m, false);
 const fmt = v => Number.isInteger(v) ? String(v) : v.toFixed(1).replace(/\.0$/, '');
 
 function renderSetup(){
@@ -574,8 +594,8 @@ function renderResult(res){
   });
   $('#rSid').onchange = ev => { res.sid = ev.target.value.trim(); res.idOk = !!res.sid; dedupe(res); save(); renderResult(res); };
   $('#rName').onchange = ev => { res.name = ev.target.value.trim(); save(); };
-  $('#rDel').onclick = () => {
-    if (!confirm('이 결과를 삭제할까요?')) return;
+  $('#rDel').onclick = async () => {
+    if (!await ask('이 결과를 삭제할까요?')) return;
     db.results[db.cur] = results().filter(r => r !== res); save(); v.innerHTML = '';
   };
   $('#rNext').onclick = () => $('#camFile').click();
@@ -590,7 +610,7 @@ function dedupe(res){
 
 async function processFiles(files){
   const e = exam();
-  if (e.key.some(k => k == null) && !confirm('정답이 입력되지 않은 문항이 있습니다. 그래도 채점할까요? (나중에 정답을 넣으면 점수가 자동으로 다시 계산됩니다)')) return;
+  if (e.key.some(k => k == null) && !await ask('정답이 입력되지 않은 문항이 있습니다. 그래도 채점할까요? (나중에 정답을 넣으면 점수가 자동으로 다시 계산됩니다)')) return;
   $('#busy').classList.remove('hidden');
   const fails = [], replaced = [];
   let last = null;
@@ -622,11 +642,11 @@ async function scanKey(file){
   let out = null;
   try { out = analyze(canvasToGray(await fileToCanvas(file)), e); } catch (err) {}
   $('#busy').classList.add('hidden');
-  if (!out){ alert('답안지를 찾지 못했습니다. 네 모서리 ■가 모두 보이게 다시 찍어 주세요.'); return; }
+  if (!out){ notice('답안지를 찾지 못했습니다. 네 모서리 ■가 모두 보이게 다시 찍어 주세요.'); return; }
   const bad = [];
   out.answers.forEach((a, i) => { e.key[i] = a.st === 'ok' ? a.v : null; if (a.st !== 'ok') bad.push(i + 1); });
   save(); renderKey();
-  alert(bad.length ? `정답을 등록했습니다. ${bad.join(', ')}번은 읽지 못했으니 직접 골라 주세요.` : '정답을 모두 등록했습니다. 한 번 훑어보고 확인해 주세요.');
+  notice(bad.length ? `정답을 등록했습니다. ${bad.join(', ')}번은 읽지 못했으니 직접 골라 주세요.` : '정답을 모두 등록했습니다. 한 번 훑어보고 확인해 주세요.');
 }
 
 function renderResults(){
@@ -653,12 +673,16 @@ function renderResults(){
   }).join('') : '<p class="muted">채점한 뒤에 표시됩니다.</p>';
 }
 
-function downloadCSV(){
+function tableRows(){
   const e = exam();
   const rows = [['학번', '이름', '점수', '맞은 수', ...e.key.map((_, i) => `${i + 1}번`)]];
   rows.push(['정답', '', fmt(e.pts.reduce((s, v) => s + (+v || 0), 0)), e.n, ...e.key.map(k => k ?? '')]);
   results().map(r => ({r, g: grade(r, e)})).sort((a, b) => (a.r.sid || '').localeCompare(b.r.sid || '')).forEach(({r, g}) =>
     rows.push([r.sid, r.name || '', fmt(g.score), g.right, ...r.answers.map(a => a.v ?? '')]));
+  return rows;
+}
+function downloadCSV(){
+  const e = exam(), rows = tableRows();
   const csv = '﻿' + rows.map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\r\n');
   const a = document.createElement('a');
   a.href = URL.createObjectURL(new Blob([csv], {type: 'text/csv'}));
@@ -673,8 +697,8 @@ function bind(){
   document.querySelectorAll('.tabs button').forEach(b => b.onclick = () => show(b.dataset.tab));
   $('#examSel').onchange = ev => { db.cur = ev.target.value; save(); lastView = null; $('#resultView').innerHTML = ''; renderSetup(); };
   $('#newExam').onclick = () => { newExam(); renderSetup(); $('#title').select(); };
-  $('#delExam').onclick = () => {
-    if (!confirm(`'${exam().title}' 시험과 채점 결과를 모두 삭제할까요?`)) return;
+  $('#delExam').onclick = async () => {
+    if (!await ask(`'${exam().title}' 시험과 채점 결과를 모두 삭제할까요?`)) return;
     delete db.results[db.cur]; db.exams = db.exams.filter(x => x.id !== db.cur);
     if (!db.exams.length) newExam(); db.cur = db.exams[0].id; save(); renderSetup();
   };
@@ -716,10 +740,32 @@ function bind(){
   $('#camFile').onchange = ev => { const fs = [...ev.target.files]; ev.target.value = ''; if (fs.length) processFiles(fs); };
   $('#upFile').onchange = ev => { const fs = [...ev.target.files]; ev.target.value = ''; if (fs.length) processFiles(fs); };
   $('#csvBtn').onclick = downloadCSV;
+  $('#copyBtn').onclick = () => {
+    const tsv = tableRows().map(r => r.join('\t')).join('\n');
+    const ok = () => { $('#copyMsg').innerHTML = '<div class="alert">복사했습니다. 엑셀이나 구글 시트의 빈 칸을 누르고 붙여넣기 하세요.</div>'; };
+    const fallback = () => {
+      $('#copyMsg').innerHTML = '<div class="alert">아래 내용을 모두 선택해 복사한 뒤 엑셀에 붙여넣으세요.</div><textarea id="copyArea" readonly></textarea>';
+      $('#copyArea').value = tsv; $('#copyArea').select();
+    };
+    try { navigator.clipboard.writeText(tsv).then(ok, fallback); } catch (err) { fallback(); }
+  };
+  $('#imgBtn').onclick = () => {
+    const img = new Image();
+    img.onload = () => {
+      const c = document.createElement('canvas'); c.width = 2480; c.height = 3508;
+      const ctx = c.getContext('2d'); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, c.width, c.height);
+      ctx.drawImage(img, 0, 0, c.width, c.height);
+      $('#sheetImgWrap').innerHTML = '<p class="muted" style="margin-top:12px">이미지를 길게 누르거나(휴대폰) 오른쪽 클릭해서(PC) 저장한 뒤, A4 용지에 <b>페이지에 맞춤</b>으로 인쇄하세요.</p>';
+      const out = new Image(); out.className = 'sheetimg'; out.alt = 'OMR 답안지'; out.src = c.toDataURL('image/png');
+      $('#sheetImgWrap').appendChild(out);
+    };
+    img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(sheetSVG(exam()));
+  };
 }
 
 window.OMR = {buildLayout, sheetSVG, solveHomography, applyH, canvasToGray, analyze, MARK};
 load(); bind(); renderSetup();
+if (window.self !== window.top){ $('#printBtn').classList.add('hidden'); $('#csvBtn').classList.add('hidden'); $('#imgBtn').classList.add('primary'); }
 </script>
 </body>
 </html>
