@@ -1,0 +1,725 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OMR 채점기</title>
+<style>
+:root{
+  --bg:#f6f7f9; --card:#fff; --text:#16181d; --muted:#6b7280; --line:#e3e5ea;
+  --accent:#2f5bea; --accent-ink:#fff; --ok:#15803d; --bad:#dc2626; --warn:#d97706; --chip:#eef1f6;
+}
+@media (prefers-color-scheme:dark){
+  :root{--bg:#111316; --card:#1b1e23; --text:#eceef2; --muted:#9aa1ad; --line:#2c3038;
+    --accent:#6c8cff; --accent-ink:#0b0d12; --ok:#4ade80; --bad:#f87171; --warn:#fbbf24; --chip:#262a31;}
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;font-size:16px;line-height:1.5}
+.app{max-width:760px;margin:0 auto;padding:16px 16px 80px}
+h1{font-size:22px;margin:4px 0 2px}
+.sub{color:var(--muted);font-size:14px;margin:0 0 14px}
+.tabs{display:flex;gap:6px;position:sticky;top:0;background:var(--bg);padding:8px 0;z-index:5}
+.tabs button{flex:1;padding:10px 4px;border:1px solid var(--line);background:var(--card);color:var(--text);border-radius:10px;font-size:15px;font-weight:600}
+.tabs button.on{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin:12px 0}
+.card h2{font-size:17px;margin:0 0 12px}
+label.f{display:block;font-size:14px;color:var(--muted);margin:10px 0 4px}
+input,select{font:inherit;color:var(--text);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 10px}
+input[type=text]{width:100%}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end}
+.row>div{flex:1;min-width:120px}
+.row>div input,.row>div select{width:100%}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:11px 16px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--text);font:inherit;font-weight:600;cursor:pointer}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn.big{width:100%;padding:16px;font-size:17px;margin-top:8px}
+.btn.sm{padding:6px 10px;font-size:14px}
+.btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.btns .btn{flex:1}
+.muted{color:var(--muted);font-size:14px}
+.keyrow{display:flex;align-items:center;gap:6px;padding:6px 0;border-bottom:1px solid var(--line)}
+.keyrow:last-child{border-bottom:0}
+.keyrow .n{width:34px;font-weight:700;text-align:right;flex:none}
+.keyrow .chs{display:flex;gap:5px;flex:1}
+.keyrow .chs button{width:36px;height:36px;border-radius:50%;border:1.5px solid var(--line);background:var(--card);color:var(--text);font-weight:700;font-size:15px;padding:0}
+.keyrow .chs button.on{background:var(--text);color:var(--card);border-color:var(--text)}
+.keyrow input{width:64px;text-align:right;flex:none}
+.keyrow .pt{font-size:13px;color:var(--muted);flex:none}
+.total{font-weight:700}
+.score{font-size:44px;font-weight:800;line-height:1.1}
+.score small{font-size:18px;color:var(--muted);font-weight:600}
+.overlay{width:100%;border-radius:10px;border:1px solid var(--line);margin-top:10px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:6px;margin-top:10px}
+.qa{border:1px solid var(--line);border-radius:8px;padding:5px 6px;font-size:13px;display:flex;flex-direction:column;gap:2px}
+.qa b{font-size:14px}
+.qa.o{border-color:var(--ok)}
+.qa.x{border-color:var(--bad)}
+.qa.chk{border-color:var(--warn);border-width:2px}
+.qa select{padding:2px 4px;font-size:13px}
+.o-t{color:var(--ok);font-weight:700}.x-t{color:var(--bad);font-weight:700}.w-t{color:var(--warn);font-weight:700}
+.alert{padding:10px 12px;border-radius:10px;background:var(--chip);margin-top:10px;font-size:14px}
+.alert.warn{border-left:4px solid var(--warn)}
+.alert.err{border-left:4px solid var(--bad)}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{padding:8px 6px;border-bottom:1px solid var(--line);text-align:left}
+th{color:var(--muted);font-weight:600}
+td.r,th.r{text-align:right}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.stats div{background:var(--chip);border-radius:10px;padding:10px;text-align:center}
+.stats b{display:block;font-size:20px}
+.stats span{font-size:12px;color:var(--muted)}
+.bar{display:flex;align-items:center;gap:8px;font-size:13px;margin:3px 0}
+.bar .t{width:34px;text-align:right;flex:none}
+.bar .track{flex:1;height:10px;background:var(--chip);border-radius:5px;overflow:hidden}
+.bar .fill{height:100%;background:var(--accent)}
+.bar .fill.low{background:var(--bad)}
+.bar .v{width:40px;flex:none}
+.hidden{display:none!important}
+#busy{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;color:#fff;font-size:18px;z-index:50}
+.scroll{overflow-x:auto}
+#print-area{display:none}
+@media print{
+  @page{size:A4;margin:0}
+  body{background:#fff}
+  .app,#busy{display:none!important}
+  #print-area{display:block}
+  #print-area svg{display:block;width:210mm;height:297mm;page-break-after:always}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <h1>OMR 채점기</h1>
+  <p class="sub">답안지를 출력하고, 학생 답안지를 사진으로 찍으면 바로 채점됩니다.</p>
+
+  <div class="tabs">
+    <button data-tab="setup" class="on">① 시험 설정</button>
+    <button data-tab="grade">② 채점</button>
+    <button data-tab="results">③ 결과</button>
+  </div>
+
+  <!-- ① 시험 설정 -->
+  <section id="tab-setup">
+    <div class="card">
+      <h2>시험</h2>
+      <div class="row">
+        <div><select id="examSel"></select></div>
+        <div style="flex:none"><button class="btn sm" id="newExam">+ 새 시험</button></div>
+        <div style="flex:none"><button class="btn sm" id="delExam">삭제</button></div>
+      </div>
+      <label class="f">시험 이름</label>
+      <input type="text" id="title" placeholder="예: 3월 단원평가">
+      <div class="row">
+        <div><label class="f">문항 수 (1~75)</label><input type="number" id="nq" min="1" max="75" inputmode="numeric"></div>
+        <div><label class="f">보기 수</label><select id="nc"><option value="4">4지선다</option><option value="5">5지선다</option></select></div>
+      </div>
+      <p class="muted">답안지를 출력한 뒤에 문항 수나 보기 수를 바꾸면 이미 출력한 답안지는 쓸 수 없습니다. 정답과 배점은 언제든 고쳐도 됩니다.</p>
+    </div>
+
+    <div class="card">
+      <h2>답안지 출력</h2>
+      <p class="muted">A4로 출력하세요. 인쇄 설정에서 <b>여백 없음</b> 또는 <b>실제 크기</b>를 고르면 가장 좋습니다. 매수는 인쇄 창에서 정하면 됩니다.</p>
+      <button class="btn primary big" id="printBtn">🖨 답안지 출력하기</button>
+    </div>
+
+    <div class="card">
+      <h2>정답과 배점</h2>
+      <label class="f">정답 빠르게 입력 (번호를 이어서 입력, 예: 3142512…)</label>
+      <div class="row">
+        <div><input type="text" id="quickKey" inputmode="numeric" placeholder="31425…"></div>
+        <div style="flex:none"><button class="btn sm" id="applyQuick">적용</button></div>
+      </div>
+      <div class="row">
+        <div><label class="f">모든 문항 배점</label><input type="number" id="allPts" step="0.5" min="0" value="4"></div>
+        <div style="flex:none"><button class="btn sm" id="applyAll">모두 적용</button></div>
+        <div style="flex:none"><button class="btn sm" id="apply100">100점 맞추기</button></div>
+      </div>
+      <div class="btns"><button class="btn" id="scanKeyBtn">📷 정답 마킹한 답안지로 등록</button></div>
+      <input type="file" id="scanKeyFile" accept="image/*" class="hidden">
+      <p class="total" id="totalPts" style="margin:14px 0 4px"></p>
+      <div id="keyList"></div>
+    </div>
+  </section>
+
+  <!-- ② 채점 -->
+  <section id="tab-grade" class="hidden">
+    <div class="card">
+      <h2 id="gradeTitle">채점</h2>
+      <button class="btn primary big" id="camBtn">📷 카메라로 찍기</button>
+      <button class="btn big" id="upBtn">🖼 사진 여러 장 올리기</button>
+      <input type="file" id="camFile" accept="image/*" capture="environment" class="hidden">
+      <input type="file" id="upFile" accept="image/*" multiple class="hidden">
+      <p class="muted" style="margin-top:12px">잘 찍는 법: 네 모서리의 ■가 모두 나오게, 그림자 없이 밝은 곳에서, 답안지가 화면을 크게 채우도록 찍으세요.</p>
+      <div id="batchMsg"></div>
+    </div>
+    <div id="resultView"></div>
+  </section>
+
+  <!-- ③ 결과 -->
+  <section id="tab-results" class="hidden">
+    <div class="card">
+      <h2 id="resTitle">결과</h2>
+      <div class="stats" id="stats"></div>
+      <div class="btns"><button class="btn" id="csvBtn">⬇ 엑셀(CSV)로 받기</button></div>
+    </div>
+    <div class="card">
+      <h2>학생별 점수</h2>
+      <div class="scroll"><table id="resTable"></table></div>
+    </div>
+    <div class="card">
+      <h2>문항별 정답률</h2>
+      <div id="qStats"></div>
+    </div>
+  </section>
+</div>
+
+<div id="print-area"></div>
+<div id="busy" class="hidden">채점 중…</div>
+
+<script>
+'use strict';
+/* =========================================================
+   답안지 배치 (단위: mm, A4 210×297)
+   ========================================================= */
+const MARK = [[14,14],[196,14],[196,283],[14,283]]; // 모서리 기준 사각형 중심 (좌상, 우상, 우하, 좌하)
+const MARK_SIZE = 8;
+const ORIENT = [25,14];      // 방향 표시(좌상단 옆 작은 사각형)
+const ORIENT_SIZE = 4;
+const PAPER_PTS = [[105,14],[14,148],[196,148],[105,283]]; // 빈 종이 밝기 측정 위치
+const BUBBLE_R = 2.6, SAMPLE_R = 1.7;
+const ROWS_MAX = 25, ROW_H = 8, CH_GAP = 7;
+
+function buildLayout(n, c){
+  const cols = Math.ceil(n / ROWS_MAX), rows = Math.ceil(n / cols);
+  const colW = 10 + c * CH_GAP, gap = 10;
+  const totalW = cols * colW + (cols - 1) * gap;
+  const x0 = 105 - totalW / 2, y0 = 66;
+  const q = [];
+  for (let i = 0; i < n; i++){
+    const col = Math.floor(i / rows), r = i % rows;
+    const bx = x0 + col * (colW + gap), y = y0 + r * ROW_H + 4;
+    const b = [];
+    for (let k = 0; k < c; k++) b.push({x: bx + 10 + CH_GAP / 2 + k * CH_GAP, y});
+    q.push({num: i + 1, lx: bx + 7, y, b});
+  }
+  const id = [38, 47].map(y => Array.from({length: 10}, (_, d) => ({x: 112 + d * 7.5, y})));
+  return {q, id, cols, rows, x0, colW, gap};
+}
+
+function esc(s){ return String(s).replace(/[&<>"]/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch])); }
+
+function sheetSVG(exam){
+  const L = buildLayout(exam.n, exam.choices);
+  const o = [];
+  o.push(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 210 297" width="210mm" height="297mm" font-family="'Apple SD Gothic Neo','Malgun Gothic',sans-serif">`);
+  o.push(`<rect width="210" height="297" fill="#fff"/>`);
+  for (const [x, y] of MARK) o.push(`<rect x="${x - MARK_SIZE/2}" y="${y - MARK_SIZE/2}" width="${MARK_SIZE}" height="${MARK_SIZE}" fill="#000"/>`);
+  o.push(`<rect x="${ORIENT[0] - ORIENT_SIZE/2}" y="${ORIENT[1] - ORIENT_SIZE/2}" width="${ORIENT_SIZE}" height="${ORIENT_SIZE}" fill="#000"/>`);
+  o.push(`<text x="105" y="26" text-anchor="middle" font-size="6" font-weight="700">${esc(exam.title || 'OMR 답안지')}</text>`);
+  // 이름 칸
+  o.push(`<rect x="24" y="32" width="58" height="20" rx="1.5" fill="none" stroke="#333" stroke-width="0.3"/>`);
+  o.push(`<text x="27" y="37" font-size="3.2" fill="#555">이름</text>`);
+  // 학번 칸
+  o.push(`<text x="88" y="34.2" font-size="3.2" fill="#555">학번</text>`);
+  o.push(`<text x="88" y="39.2" font-size="2.8" fill="#333">십의 자리</text>`);
+  o.push(`<text x="88" y="48.2" font-size="2.8" fill="#333">일의 자리</text>`);
+  for (const row of L.id) for (let d = 0; d < 10; d++){
+    const p = row[d];
+    o.push(`<circle cx="${p.x}" cy="${p.y}" r="${BUBBLE_R}" fill="none" stroke="#444" stroke-width="0.25"/><text x="${p.x}" y="${p.y + 1.05}" text-anchor="middle" font-size="2.9" fill="#aaa">${d}</text>`);
+  }
+  o.push(`<text x="105" y="59" text-anchor="middle" font-size="2.9" fill="#444">컴퓨터용 사인펜이나 진한 연필로 ● 처럼 칸을 꽉 채워 칠하세요. 네 모서리의 ■ 표시를 가리거나 접지 마세요.</text>`);
+  // 문항
+  for (const q of L.q){
+    o.push(`<text x="${q.lx}" y="${q.y + 1.2}" text-anchor="end" font-size="3.6" font-weight="700">${q.num}</text>`);
+    q.b.forEach((p, k) => {
+      o.push(`<circle cx="${p.x}" cy="${p.y}" r="${BUBBLE_R}" fill="none" stroke="#444" stroke-width="0.25"/><text x="${p.x}" y="${p.y + 1.05}" text-anchor="middle" font-size="2.9" fill="#aaa">${k + 1}</text>`);
+    });
+  }
+  // 5문항마다 옅은 구분선
+  for (let col = 0; col < L.cols; col++){
+    const bx = L.x0 + col * (L.colW + L.gap);
+    for (let r = 5; r < L.rows; r += 5){
+      const y = 66 + r * ROW_H;
+      o.push(`<line x1="${bx}" x2="${bx + L.colW}" y1="${y}" y2="${y}" stroke="#ccc" stroke-width="0.2" stroke-dasharray="1 1"/>`);
+    }
+  }
+  o.push(`<text x="105" y="276" text-anchor="middle" font-size="2.6" fill="#888">${exam.n}문항 · ${exam.choices}지선다 · OMR 채점기 전용 답안지</text>`);
+  o.push(`</svg>`);
+  return o.join('');
+}
+
+/* =========================================================
+   이미지 처리
+   ========================================================= */
+function solveHomography(src, dst){ // src[i] -> dst[i], 4점
+  const A = [];
+  for (let i = 0; i < 4; i++){
+    const [x, y] = src[i], [u, v] = dst[i];
+    A.push([x, y, 1, 0, 0, 0, -x * u, -y * u, u]);
+    A.push([0, 0, 0, x, y, 1, -x * v, -y * v, v]);
+  }
+  for (let c = 0; c < 8; c++){
+    let p = c;
+    for (let r = c + 1; r < 8; r++) if (Math.abs(A[r][c]) > Math.abs(A[p][c])) p = r;
+    if (Math.abs(A[p][c]) < 1e-12) return null;
+    [A[c], A[p]] = [A[p], A[c]];
+    for (let r = 0; r < 8; r++){
+      if (r === c) continue;
+      const f = A[r][c] / A[c][c];
+      for (let k = c; k < 9; k++) A[r][k] -= f * A[c][k];
+    }
+  }
+  return A.map((row, i) => row[8] / row[i]);
+}
+function applyH(H, x, y){
+  const d = H[6] * x + H[7] * y + 1;
+  return [(H[0] * x + H[1] * y + H[2]) / d, (H[3] * x + H[4] * y + H[5]) / d];
+}
+
+function canvasToGray(canvas){
+  const w = canvas.width, h = canvas.height;
+  const d = canvas.getContext('2d').getImageData(0, 0, w, h).data;
+  const g = new Uint8ClampedArray(w * h);
+  for (let i = 0, j = 0; i < g.length; i++, j += 4) g[i] = (d[j] * 299 + d[j + 1] * 587 + d[j + 2] * 114) / 1000;
+  return {g, w, h};
+}
+
+function bilinear(img, x, y){
+  const {g, w, h} = img;
+  if (x < 0 || y < 0 || x > w - 2 || y > h - 2) return -1;
+  const x0 = x | 0, y0 = y | 0, fx = x - x0, fy = y - y0, i = y0 * w + x0;
+  return (g[i] * (1 - fx) + g[i + 1] * fx) * (1 - fy) + (g[i + w] * (1 - fx) + g[i + w + 1] * fx) * fy;
+}
+function sampleMean(img, H, cx, cy, r){
+  let s = 0, n = 0;
+  const st = r / 4;
+  for (let dy = -r; dy <= r + 1e-9; dy += st)
+    for (let dx = -r; dx <= r + 1e-9; dx += st){
+      if (dx * dx + dy * dy > r * r) continue;
+      const p = applyH(H, cx + dx, cy + dy);
+      const v = bilinear(img, p[0], p[1]);
+      if (v >= 0){ s += v; n++; }
+    }
+  return n ? s / n : -1;
+}
+
+function findBlobs(img){
+  const {g, w, h} = img;
+  // 적응형 이진화 (주변 평균보다 확실히 어두운 픽셀)
+  const W = w + 1, I = new Float64Array(W * (h + 1));
+  for (let y = 0; y < h; y++){
+    let row = 0;
+    for (let x = 0; x < w; x++){ row += g[y * w + x]; I[(y + 1) * W + x + 1] = I[y * W + x + 1] + row; }
+  }
+  const R = Math.max(15, Math.round(Math.max(w, h) / 20));
+  const bin = new Uint8Array(w * h);
+  for (let y = 0; y < h; y++){
+    const y1 = Math.max(0, y - R), y2 = Math.min(h, y + R + 1);
+    for (let x = 0; x < w; x++){
+      const x1 = Math.max(0, x - R), x2 = Math.min(w, x + R + 1);
+      const sum = I[y2 * W + x2] - I[y1 * W + x2] - I[y2 * W + x1] + I[y1 * W + x1];
+      const mean = sum / ((y2 - y1) * (x2 - x1));
+      if (g[y * w + x] < mean * 0.72) bin[y * w + x] = 1;
+    }
+  }
+  // 연결 요소
+  const lab = new Uint8Array(w * h), stack = new Int32Array(w * h), blobs = [];
+  const maxSide = Math.max(w, h) / 5;
+  for (let s = 0; s < w * h; s++){
+    if (!bin[s] || lab[s]) continue;
+    let sp = 0, cnt = 0, sx = 0, sy = 0, minx = w, maxx = 0, miny = h, maxy = 0;
+    stack[sp++] = s; lab[s] = 1;
+    while (sp){
+      const p = stack[--sp], x = p % w, y = (p - x) / w;
+      cnt++; sx += x; sy += y;
+      if (x < minx) minx = x; if (x > maxx) maxx = x; if (y < miny) miny = y; if (y > maxy) maxy = y;
+      if (x > 0 && bin[p - 1] && !lab[p - 1]){ lab[p - 1] = 1; stack[sp++] = p - 1; }
+      if (x < w - 1 && bin[p + 1] && !lab[p + 1]){ lab[p + 1] = 1; stack[sp++] = p + 1; }
+      if (y > 0 && bin[p - w] && !lab[p - w]){ lab[p - w] = 1; stack[sp++] = p - w; }
+      if (y < h - 1 && bin[p + w] && !lab[p + w]){ lab[p + w] = 1; stack[sp++] = p + w; }
+    }
+    const bw = maxx - minx + 1, bh = maxy - miny + 1;
+    if (bw < 6 || bh < 6 || bw > maxSide || bh > maxSide) continue;
+    const asp = bw / bh;
+    if (asp < 0.5 || asp > 2) continue;
+    if (cnt / (bw * bh) < 0.45) continue;
+    blobs.push({x: sx / cnt + 0.5, y: sy / cnt + 0.5, area: cnt});
+  }
+  return blobs;
+}
+
+const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
+
+function locateSheet(img){
+  const blobs = findBlobs(img).sort((a, b) => b.area - a.area).slice(0, 18);
+  const quads = [];
+  const n = blobs.length;
+  for (let a = 0; a < n; a++) for (let b = a + 1; b < n; b++) for (let c = b + 1; c < n; c++) for (let d = c + 1; d < n; d++){
+    const pts = [blobs[a], blobs[b], blobs[c], blobs[d]];
+    const areas = pts.map(p => p.area);
+    if (Math.max(...areas) / Math.min(...areas) > 3) continue;
+    const cx = (pts[0].x + pts[1].x + pts[2].x + pts[3].x) / 4, cy = (pts[0].y + pts[1].y + pts[2].y + pts[3].y) / 4;
+    pts.sort((p, q) => Math.atan2(p.y - cy, p.x - cx) - Math.atan2(q.y - cy, q.x - cx));
+    let sign = 0, convex = true, area2 = 0;
+    for (let i = 0; i < 4; i++){
+      const p = pts[i], q = pts[(i + 1) % 4], r = pts[(i + 2) % 4];
+      const cr = (q.x - p.x) * (r.y - q.y) - (q.y - p.y) * (r.x - q.x);
+      if (!sign) sign = Math.sign(cr); else if (Math.sign(cr) !== sign){ convex = false; break; }
+      area2 += p.x * q.y - q.x * p.y;
+    }
+    if (!convex) continue;
+    const s1 = (dist(pts[0], pts[1]) + dist(pts[2], pts[3])) / 2, s2 = (dist(pts[1], pts[2]) + dist(pts[3], pts[0])) / 2;
+    const short = Math.min(s1, s2), long = Math.max(s1, s2);
+    if (long / short < 1.1 || long / short > 2.3) continue;
+    const msz = areas.reduce((s, v) => s + Math.sqrt(v), 0) / 4;
+    const rel = msz / short;
+    if (rel < 0.02 || rel > 0.09) continue;
+    quads.push({pts, area: Math.abs(area2) / 2});
+  }
+  quads.sort((p, q) => q.area - p.area);
+  for (const quad of quads.slice(0, 12)){
+    let best = null;
+    for (let k = 0; k < 4; k++){
+      const dst = [0, 1, 2, 3].map(j => { const p = quad.pts[(j + k) % 4]; return [p.x, p.y]; });
+      const H = solveHomography(MARK, dst);
+      if (!H) continue;
+      const black = MARK.reduce((s, [x, y]) => s + sampleMean(img, H, x, y, 2.5), 0) / 4;
+      const papers = PAPER_PTS.map(([x, y]) => sampleMean(img, H, x, y, 2)).sort((a, b) => a - b);
+      const paper = (papers[1] + papers[2]) / 2;
+      if (paper - black < 30) continue;
+      const fill = v => (paper - v) / (paper - black);
+      const orient = fill(sampleMean(img, H, ORIENT[0], ORIENT[1], 1.2));
+      const blank = fill(sampleMean(img, H, 185, 14, 1.2));
+      const score = orient - blank;
+      if (!best || score > best.score) best = {H, black, paper, score, orient, blank};
+    }
+    if (best && best.orient > 0.55 && best.blank < 0.3) return best;
+  }
+  return null;
+}
+
+const MARKED = 0.45, FAINT = 0.22;
+function readGroup(fills){
+  const idx = fills.map((f, i) => [f, i]).sort((a, b) => b[0] - a[0]);
+  const marked = idx.filter(([f]) => f >= MARKED);
+  if (marked.length === 1) return {v: marked[0][1], st: 'ok'};
+  if (marked.length > 1){
+    if (marked[0][0] - marked[1][0] >= 0.3) return {v: marked[0][1], st: 'ok'};
+    return {v: null, st: 'multi'};
+  }
+  if (idx[0][0] >= FAINT) return {v: idx[0][1], st: 'faint'};
+  return {v: null, st: 'blank'};
+}
+
+function analyze(img, exam){
+  const loc = locateSheet(img);
+  if (!loc) return null;
+  const {H, black, paper} = loc;
+  const fill = (x, y) => Math.max(0, Math.min(1, (paper - sampleMean(img, H, x, y, SAMPLE_R)) / (paper - black)));
+  const L = buildLayout(exam.n, exam.choices);
+  const answers = L.q.map(q => {
+    const fills = q.b.map(p => fill(p.x, p.y));
+    const r = readGroup(fills);
+    return {v: r.v === null ? null : r.v + 1, st: r.st};
+  });
+  const digits = L.id.map(row => readGroup(row.map(p => fill(p.x, p.y))));
+  const idOk = digits.every(d => d.v !== null && d.st === 'ok');
+  const sid = idOk ? String(digits[0].v) + String(digits[1].v) : '';
+  return {answers, sid, idOk, H};
+}
+
+async function fileToCanvas(file, max = 1400){
+  const url = URL.createObjectURL(file);
+  try {
+    const im = await new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = url; });
+    const s = Math.min(1, max / Math.max(im.naturalWidth, im.naturalHeight));
+    const c = document.createElement('canvas');
+    c.width = Math.round(im.naturalWidth * s); c.height = Math.round(im.naturalHeight * s);
+    c.getContext('2d').drawImage(im, 0, 0, c.width, c.height);
+    return c;
+  } finally { URL.revokeObjectURL(url); }
+}
+
+/* =========================================================
+   저장
+   ========================================================= */
+const STORE = 'omr-grader-v1';
+let db = {exams: [], cur: null, results: {}};
+function load(){
+  try { const s = JSON.parse(localStorage.getItem(STORE)); if (s && s.exams) db = s; } catch (e) {}
+  if (!db.results) db.results = {};
+  if (!db.exams.length) newExam();
+  if (!exam()) db.cur = db.exams[0].id;
+}
+function save(){ try { localStorage.setItem(STORE, JSON.stringify(db)); } catch (e) {} }
+function exam(){ return db.exams.find(e => e.id === db.cur); }
+function results(){ return db.results[db.cur] || (db.results[db.cur] = []); }
+function newExam(){
+  const e = {id: 'e' + Date.now().toString(36), title: '새 시험', n: 20, choices: 5, key: Array(20).fill(null), pts: Array(20).fill(5)};
+  db.exams.push(e); db.cur = e.id; save();
+}
+function resize(e){
+  const old = e.key.length, p = e.pts[old - 1] ?? 4;
+  e.key = Array.from({length: e.n}, (_, i) => e.key[i] ?? null);
+  e.pts = Array.from({length: e.n}, (_, i) => e.pts[i] ?? p);
+  e.key = e.key.map(k => k && k > e.choices ? null : k);
+}
+
+/* =========================================================
+   채점 계산
+   ========================================================= */
+function grade(res, e){
+  let score = 0, right = 0, check = 0;
+  const per = res.answers.map((a, i) => {
+    const ok = e.key[i] != null && a.v === e.key[i];
+    if (ok){ score += +e.pts[i] || 0; right++; }
+    const chk = (a.st === 'multi' || a.st === 'faint') && !a.fixed;
+    if (chk) check++;
+    return {ok, chk};
+  });
+  const total = e.pts.reduce((s, v) => s + (+v || 0), 0);
+  return {score: Math.round(score * 100) / 100, right, check, per, total};
+}
+
+/* =========================================================
+   화면
+   ========================================================= */
+const $ = s => document.querySelector(s);
+const fmt = v => Number.isInteger(v) ? String(v) : v.toFixed(1).replace(/\.0$/, '');
+
+function renderSetup(){
+  const e = exam();
+  $('#examSel').innerHTML = db.exams.map(x => `<option value="${x.id}" ${x.id === db.cur ? 'selected' : ''}>${esc(x.title || '이름 없음')}</option>`).join('');
+  $('#title').value = e.title; $('#nq').value = e.n; $('#nc').value = e.choices;
+  renderKey();
+}
+function renderKey(){
+  const e = exam();
+  $('#keyList').innerHTML = e.key.map((k, i) => `<div class="keyrow" data-i="${i}"><span class="n">${i + 1}</span><span class="chs">${
+    Array.from({length: e.choices}, (_, c) => `<button data-c="${c + 1}" class="${k === c + 1 ? 'on' : ''}">${c + 1}</button>`).join('')
+  }</span><input type="number" step="0.5" min="0" value="${e.pts[i]}" aria-label="${i + 1}번 배점"><span class="pt">점</span></div>`).join('');
+  updateTotal();
+}
+function updateTotal(){
+  const e = exam();
+  const total = e.pts.reduce((s, v) => s + (+v || 0), 0);
+  const miss = e.key.filter(k => k == null).length;
+  $('#totalPts').innerHTML = `총점 ${fmt(total)}점` + (miss ? ` · <span class="w-t">정답 미입력 ${miss}문항</span>` : ' · 정답 입력 완료');
+}
+
+function show(tab){
+  document.querySelectorAll('.tabs button').forEach(b => b.classList.toggle('on', b.dataset.tab === tab));
+  ['setup', 'grade', 'results'].forEach(t => $('#tab-' + t).classList.toggle('hidden', t !== tab));
+  if (tab === 'grade') $('#gradeTitle').textContent = `채점 · ${exam().title}`;
+  if (tab === 'results') renderResults();
+  if (tab === 'setup') renderSetup();
+}
+
+let lastView = null; // {resId, canvas, H}
+function drawOverlay(canvas, H, res, e){
+  const out = document.createElement('canvas');
+  const s = Math.min(1, 900 / Math.max(canvas.width, canvas.height));
+  out.width = Math.round(canvas.width * s); out.height = Math.round(canvas.height * s);
+  const ctx = out.getContext('2d');
+  ctx.drawImage(canvas, 0, 0, out.width, out.height);
+  const L = buildLayout(e.n, e.choices);
+  const g = grade(res, e);
+  const ring = (x, y, color, width, dash) => {
+    const p = applyH(H, x, y), q = applyH(H, x + BUBBLE_R + 0.8, y);
+    ctx.beginPath(); ctx.setLineDash(dash || []);
+    ctx.arc(p[0] * s, p[1] * s, Math.hypot(q[0] - p[0], q[1] - p[1]) * s, 0, Math.PI * 2);
+    ctx.strokeStyle = color; ctx.lineWidth = width; ctx.stroke();
+  };
+  L.q.forEach((q, i) => {
+    const a = res.answers[i], k = e.key[i];
+    if (g.per[i].chk) q.b.forEach(p => ring(p.x, p.y, '#f59e0b', 2.5));
+    if (a.v) ring(q.b[a.v - 1].x, q.b[a.v - 1].y, g.per[i].ok ? '#16a34a' : '#dc2626', 3);
+    if (!g.per[i].ok && k) ring(q.b[k - 1].x, q.b[k - 1].y, '#2563eb', 2, [4, 3]);
+  });
+  return out;
+}
+
+function renderResult(res){
+  const e = exam(), g = grade(res, e);
+  const statusTxt = {multi: '두 개 이상 칠함', faint: '흐리게 칠함', blank: '안 칠함'};
+  const v = $('#resultView');
+  v.innerHTML = `<div class="card">
+    <div class="row" style="align-items:center">
+      <div><div class="score">${fmt(g.score)}<small> / ${fmt(g.total)}점</small></div>
+      <div class="muted">맞은 문항 ${g.right} / ${e.n}</div></div>
+      <div style="flex:none;min-width:0"><label class="f">학번</label><input id="rSid" inputmode="numeric" style="width:90px" value="${esc(res.sid)}"></div>
+      <div style="flex:none;min-width:0"><label class="f">이름</label><input id="rName" style="width:110px" value="${esc(res.name || '')}"></div>
+    </div>
+    ${res.idOk ? '' : '<div class="alert warn">학번 마킹을 읽지 못했습니다. 학번을 직접 입력해 주세요.</div>'}
+    ${g.check ? `<div class="alert warn"><b>확인이 필요한 문항 ${g.check}개</b>가 있습니다(주황색). 사진을 보고 아래에서 답을 골라 주세요.</div>` : ''}
+    <div id="ovWrap"></div>
+    <p class="muted" style="margin:6px 0 0">초록 = 맞음 · 빨강 = 틀림 · 파란 점선 = 정답 · 주황 = 확인 필요</p>
+    <div class="grid">${res.answers.map((a, i) => {
+      const p = g.per[i], cls = p.chk ? 'chk' : (p.ok ? 'o' : 'x');
+      return `<div class="qa ${cls}"><b>${i + 1}번 ${p.chk ? '<span class="w-t">?</span>' : (p.ok ? '<span class="o-t">O</span>' : '<span class="x-t">X</span>')}</b>
+        <select data-i="${i}"><option value="">${a.v == null ? (statusTxt[a.st] || '없음') : '없음'}</option>${
+          Array.from({length: e.choices}, (_, c) => `<option value="${c + 1}" ${a.v === c + 1 ? 'selected' : ''}>답 ${c + 1}</option>`).join('')}</select>
+        <span class="muted">정답 ${e.key[i] ?? '-'}${a.st !== 'ok' && a.st !== 'blank' && !a.fixed ? ' · ' + statusTxt[a.st] : ''}</span></div>`;
+    }).join('')}</div>
+    <div class="btns"><button class="btn" id="rDel">이 결과 삭제</button><button class="btn primary" id="rNext">다음 학생 찍기</button></div>
+  </div>`;
+  if (lastView && lastView.resId === res.id){
+    const ov = drawOverlay(lastView.canvas, lastView.H, res, e);
+    ov.className = 'overlay';
+    $('#ovWrap').appendChild(ov);
+  }
+  v.querySelectorAll('select[data-i]').forEach(sel => sel.onchange = () => {
+    const a = res.answers[+sel.dataset.i];
+    a.v = sel.value ? +sel.value : null; a.fixed = true;
+    save(); renderResult(res);
+  });
+  $('#rSid').onchange = ev => { res.sid = ev.target.value.trim(); res.idOk = !!res.sid; dedupe(res); save(); renderResult(res); };
+  $('#rName').onchange = ev => { res.name = ev.target.value.trim(); save(); };
+  $('#rDel').onclick = () => {
+    if (!confirm('이 결과를 삭제할까요?')) return;
+    db.results[db.cur] = results().filter(r => r !== res); save(); v.innerHTML = '';
+  };
+  $('#rNext').onclick = () => $('#camFile').click();
+}
+
+function dedupe(res){
+  if (!res.sid) return false;
+  const list = results(), before = list.length;
+  db.results[db.cur] = list.filter(r => r === res || r.sid !== res.sid);
+  return db.results[db.cur].length < before;
+}
+
+async function processFiles(files){
+  const e = exam();
+  if (e.key.some(k => k == null) && !confirm('정답이 입력되지 않은 문항이 있습니다. 그래도 채점할까요? (나중에 정답을 넣으면 점수가 자동으로 다시 계산됩니다)')) return;
+  $('#busy').classList.remove('hidden');
+  const fails = [], replaced = [];
+  let last = null;
+  try {
+    for (const f of files){
+      let canvas;
+      try { canvas = await fileToCanvas(f); } catch (err) { fails.push(f.name); continue; }
+      await new Promise(r => setTimeout(r, 0));
+      const out = analyze(canvasToGray(canvas), e);
+      if (!out){ fails.push(f.name || '사진'); continue; }
+      const res = {id: 'r' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), sid: out.sid, idOk: out.idOk, name: '', answers: out.answers, at: Date.now()};
+      results().push(res);
+      if (dedupe(res)) replaced.push(res.sid);
+      last = res; lastView = {resId: res.id, canvas, H: out.H};
+    }
+    save();
+  } finally { $('#busy').classList.add('hidden'); }
+  const msgs = [];
+  if (files.length > 1) msgs.push(`${files.length - fails.length}장 채점 완료. 결과 탭에서 전체 점수를 볼 수 있습니다.`);
+  if (replaced.length) msgs.push(`같은 학번(${replaced.join(', ')})의 이전 결과를 새 결과로 바꿨습니다.`);
+  $('#batchMsg').innerHTML = msgs.map(m => `<div class="alert">${m}</div>`).join('') +
+    (fails.length ? `<div class="alert err">답안지를 찾지 못했습니다${files.length > 1 ? ` (${fails.length}장)` : ''}. 네 모서리 ■가 모두 보이게, 밝은 곳에서 다시 찍어 주세요.</div>` : '');
+  if (last) renderResult(last);
+}
+
+async function scanKey(file){
+  const e = exam();
+  $('#busy').classList.remove('hidden');
+  let out = null;
+  try { out = analyze(canvasToGray(await fileToCanvas(file)), e); } catch (err) {}
+  $('#busy').classList.add('hidden');
+  if (!out){ alert('답안지를 찾지 못했습니다. 네 모서리 ■가 모두 보이게 다시 찍어 주세요.'); return; }
+  const bad = [];
+  out.answers.forEach((a, i) => { e.key[i] = a.st === 'ok' ? a.v : null; if (a.st !== 'ok') bad.push(i + 1); });
+  save(); renderKey();
+  alert(bad.length ? `정답을 등록했습니다. ${bad.join(', ')}번은 읽지 못했으니 직접 골라 주세요.` : '정답을 모두 등록했습니다. 한 번 훑어보고 확인해 주세요.');
+}
+
+function renderResults(){
+  const e = exam(), list = results();
+  $('#resTitle').textContent = `결과 · ${e.title}`;
+  const gs = list.map(r => ({r, g: grade(r, e)})).sort((a, b) => (a.r.sid || 'zz').localeCompare(b.r.sid || 'zz'));
+  const scores = gs.map(x => x.g.score);
+  const avg = scores.length ? scores.reduce((s, v) => s + v, 0) / scores.length : 0;
+  $('#stats').innerHTML = [
+    ['응시', scores.length + '명'], ['평균', scores.length ? fmt(Math.round(avg * 10) / 10) : '-'],
+    ['최고', scores.length ? fmt(Math.max(...scores)) : '-'], ['최저', scores.length ? fmt(Math.min(...scores)) : '-']
+  ].map(([k, v]) => `<div><b>${v}</b><span>${k}</span></div>`).join('');
+  $('#resTable').innerHTML = gs.length ? `<tr><th>학번</th><th>이름</th><th class="r">점수</th><th class="r">맞은 수</th><th></th></tr>` + gs.map(({r, g}) =>
+    `<tr><td>${esc(r.sid || '?')}</td><td>${esc(r.name || '')}</td><td class="r"><b>${fmt(g.score)}</b></td><td class="r">${g.right}/${e.n}${g.check ? ' <span class="w-t">확인 ' + g.check + '</span>' : ''}</td><td class="r"><button class="btn sm" data-open="${r.id}">보기</button></td></tr>`).join('')
+    : '<tr><td class="muted">아직 채점한 답안지가 없습니다.</td></tr>';
+  document.querySelectorAll('[data-open]').forEach(b => b.onclick = () => {
+    const r = list.find(x => x.id === b.dataset.open);
+    show('grade'); $('#batchMsg').innerHTML = ''; renderResult(r);
+    if (!(lastView && lastView.resId === r.id)) $('#ovWrap').innerHTML = '<p class="muted">사진은 저장되지 않아 채점 직후에만 표시됩니다.</p>';
+  });
+  $('#qStats').innerHTML = list.length ? e.key.map((k, i) => {
+    const rate = Math.round(gs.filter(x => x.g.per[i].ok).length / gs.length * 100);
+    return `<div class="bar"><span class="t">${i + 1}</span><span class="track"><span class="fill ${rate < 50 ? 'low' : ''}" style="width:${rate}%;display:block"></span></span><span class="v">${rate}%</span></div>`;
+  }).join('') : '<p class="muted">채점한 뒤에 표시됩니다.</p>';
+}
+
+function downloadCSV(){
+  const e = exam();
+  const rows = [['학번', '이름', '점수', '맞은 수', ...e.key.map((_, i) => `${i + 1}번`)]];
+  rows.push(['정답', '', fmt(e.pts.reduce((s, v) => s + (+v || 0), 0)), e.n, ...e.key.map(k => k ?? '')]);
+  results().map(r => ({r, g: grade(r, e)})).sort((a, b) => (a.r.sid || '').localeCompare(b.r.sid || '')).forEach(({r, g}) =>
+    rows.push([r.sid, r.name || '', fmt(g.score), g.right, ...r.answers.map(a => a.v ?? '')]));
+  const csv = '﻿' + rows.map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\r\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv], {type: 'text/csv'}));
+  a.download = `${e.title || 'OMR'}_결과.csv`;
+  a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+
+/* =========================================================
+   이벤트
+   ========================================================= */
+function bind(){
+  document.querySelectorAll('.tabs button').forEach(b => b.onclick = () => show(b.dataset.tab));
+  $('#examSel').onchange = ev => { db.cur = ev.target.value; save(); lastView = null; $('#resultView').innerHTML = ''; renderSetup(); };
+  $('#newExam').onclick = () => { newExam(); renderSetup(); $('#title').select(); };
+  $('#delExam').onclick = () => {
+    if (!confirm(`'${exam().title}' 시험과 채점 결과를 모두 삭제할까요?`)) return;
+    delete db.results[db.cur]; db.exams = db.exams.filter(x => x.id !== db.cur);
+    if (!db.exams.length) newExam(); db.cur = db.exams[0].id; save(); renderSetup();
+  };
+  $('#title').oninput = ev => { exam().title = ev.target.value; save(); };
+  $('#title').onchange = () => renderSetup();
+  $('#nq').onchange = ev => {
+    const e = exam(); e.n = Math.max(1, Math.min(75, parseInt(ev.target.value) || 1)); resize(e); save(); renderSetup();
+  };
+  $('#nc').onchange = ev => { const e = exam(); e.choices = +ev.target.value; resize(e); save(); renderSetup(); };
+  $('#keyList').onclick = ev => {
+    const b = ev.target.closest('button[data-c]'); if (!b) return;
+    const i = +b.closest('.keyrow').dataset.i, c = +b.dataset.c, e = exam();
+    e.key[i] = e.key[i] === c ? null : c; save();
+    b.parentNode.querySelectorAll('button').forEach(x => x.classList.toggle('on', e.key[i] === +x.dataset.c));
+    updateTotal();
+  };
+  $('#keyList').oninput = ev => {
+    if (ev.target.tagName !== 'INPUT') return;
+    exam().pts[+ev.target.closest('.keyrow').dataset.i] = parseFloat(ev.target.value) || 0; save(); updateTotal();
+  };
+  $('#applyQuick').onclick = () => {
+    const e = exam(), digits = $('#quickKey').value.replace(/[^0-9]/g, '').split('').map(Number);
+    digits.slice(0, e.n).forEach((d, i) => { e.key[i] = d >= 1 && d <= e.choices ? d : null; });
+    save(); renderKey(); $('#quickKey').value = '';
+  };
+  $('#applyAll').onclick = () => { const e = exam(), v = parseFloat($('#allPts').value) || 0; e.pts = e.pts.map(() => v); save(); renderKey(); };
+  $('#apply100').onclick = () => {
+    const e = exam(), base = Math.floor(100 / e.n * 2) / 2; // 0.5점 단위
+    e.pts = Array(e.n).fill(base);
+    let rest = Math.round((100 - base * e.n) * 2); // 남은 0.5점 개수를 뒤 문항부터 나눔
+    for (let i = e.n - 1; rest > 0; i = (i - 1 + e.n) % e.n, rest--) e.pts[i] += 0.5;
+    save(); renderKey();
+  };
+  $('#scanKeyBtn').onclick = () => $('#scanKeyFile').click();
+  $('#scanKeyFile').onchange = ev => { const f = ev.target.files[0]; ev.target.value = ''; if (f) scanKey(f); };
+  $('#printBtn').onclick = () => { $('#print-area').innerHTML = sheetSVG(exam()); setTimeout(() => window.print(), 50); };
+  $('#camBtn').onclick = () => $('#camFile').click();
+  $('#upBtn').onclick = () => $('#upFile').click();
+  $('#camFile').onchange = ev => { const fs = [...ev.target.files]; ev.target.value = ''; if (fs.length) processFiles(fs); };
+  $('#upFile').onchange = ev => { const fs = [...ev.target.files]; ev.target.value = ''; if (fs.length) processFiles(fs); };
+  $('#csvBtn').onclick = downloadCSV;
+}
+
+window.OMR = {buildLayout, sheetSVG, solveHomography, applyH, canvasToGray, analyze, MARK};
+load(); bind(); renderSetup();
+</script>
+</body>
+</html>
